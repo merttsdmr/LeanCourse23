@@ -52,8 +52,11 @@ example (x : ℝ) : DifferentiableAt ℝ sin x :=
 
 example (x : ℝ) :
     HasDerivAt (fun x ↦ Real.cos x + Real.sin x)
-    (Real.cos x - Real.sin x) x := by sorry
-
+    (Real.cos x - Real.sin x) x := by
+      rw[sub_eq_neg_add]
+      apply HasDerivAt.add
+      exact hasDerivAt_cos x
+      exact hasDerivAt_sin x
 
 
 
@@ -63,7 +66,19 @@ example (x : ℝ) :
 (normed) vector space. -/
 
 example (x : ℝ) : deriv (fun x ↦ ((Real.cos x) ^ 2, (Real.sin x) ^ 2)) x =
-    (- 2 * Real.cos x * Real.sin x, 2 * Real.sin x * Real.cos x) := by sorry
+    (- 2 * Real.cos x * Real.sin x, 2 * Real.sin x * Real.cos x) := by
+      apply HasDerivAt.deriv
+      refine HasDerivAt.prod ?h.hf₁ ?h.hf₂
+      · suffices : HasDerivAt (fun x↦ cos x ^2) (2*(cos x)^1 * (- sin x)) x
+        · simp at this
+          simp
+          exact this
+        apply HasDerivAt.pow
+        exact hasDerivAt_cos x
+
+      · convert HasDerivAt.pow 2 ?_
+        · simp
+        · exact hasDerivAt_sin x
 
 /-
 Lean has the following names for intervals
@@ -97,7 +112,7 @@ example (f : ℝ → ℝ) {a b : ℝ} (hab : a < b)
     (hf : ContinuousOn f (Icc a b))
     (hf' : DifferentiableOn ℝ f (Ioo a b)) :
     ∃ c ∈ Ioo a b, deriv f c = (f b - f a) / (b - a) :=
-  exists_deriv_eq_slope f hab hf hf'
+      exists_deriv_eq_slope f hab hf hf'
 
 
 /- Rolle's theorem is the special case where `f a = f b`.
@@ -229,7 +244,12 @@ end NormedSpace
 /- # Exercises -/
 
 example (x : ℝ) :
-    deriv (fun x ↦ Real.exp (x ^ 2)) x = 2 * x * Real.exp (x ^ 2) := by sorry
+    deriv (fun x ↦ Real.exp (x ^ 2)) x = 2 * x * Real.exp (x ^ 2) := by {
+      apply HasDerivAt.deriv
+      apply hasDerivAt.exp
+
+
+    }
 
 /- If you have a continuous injective function `ℝ → ℝ` then `f` is monotone or antitone. This is a possible first step in proving that result.
 Prove this by contradiction using the intermediate value theorem. -/

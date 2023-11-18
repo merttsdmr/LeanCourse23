@@ -30,9 +30,19 @@ variable {R M₁ M₂ N : Type*} [CommRing R] [AddCommGroup M₁] [AddCommGroup 
 
 /- Define the coproduct of two linear maps that send (x, y) ↦ f x + g y. -/
 
-def exercise5_1 (f : M₁ →ₗ[R] N) (g : M₂ →ₗ[R] N) : M₁ × M₂ →ₗ[R] N := sorry
+def exercise5_1 (f : M₁ →ₗ[R] N) (g : M₂ →ₗ[R] N) : M₁ × M₂ →ₗ[R] N where
+  toFun := fun (x : M₁ × M₂) ↦ f x.1 +g x.2
+  map_add' := by
+    intro x y
+    simp only [Prod.fst_add, Prod.snd_add, map_add]
+    rw [@add_add_add_comm]
+  map_smul' := by
+    intro r x
+    simp only [Prod.smul_fst, Prod.smul_snd, map_smul, RingHom.id_apply, smul_add]
+
+
 example (f : M₁ →ₗ[R] N) (g : M₂ →ₗ[R] N) (x : M₁) (y : M₂) :
-  exercise5_1 f g (x, y) = f x + g y := sorry -- should be rfl
+  exercise5_1 f g (x, y) = f x + g y := rfl -- should be rfl
 
 
 end LinearMap
@@ -52,10 +62,49 @@ variable {R : Type*} [CommRing R]
 #check Exists.choose_spec
 def IsAUnit (x : R) : Prop := ∃ y, y * x = 1
 
-instance exercise5_2 : Group {x : R // IsAUnit x} := sorry
+
+def unit_inverse (x : R) (hx : IsAUnit x) : R :=
+  (Exists.choose hx)
+
+
+lemma mul_is_unit {x y : R} (hx : IsAUnit x) (hy : IsAUnit y) : IsAUnit (x * y) := by
+      rw[IsAUnit] at hx
+      rw[IsAUnit] at hy
+      rw[IsAUnit]
+      obtain ⟨z1, hxx⟩ := hx
+      obtain ⟨z2, hyy⟩ := hy
+      use z2*z1
+      sorry
+
+lemma unit_inverse_is_unit {x : R} (hx : IsAUnit x) : IsAUnit (unit_inverse x hx) :=by
+  rw[IsAUnit] at *
+  rw[unit_inverse] at *
+  obtain ⟨y, hy⟩ :=hx
+  use x
+  rw[mul_comm]
+  exact Exists.choose_spec hx
+
+
+
+
+
+
+instance exercise5_2 : Group {x : R // IsAUnit x} where
+  mul x y := ⟨ x.1*y.1, mul_is_unit x.2 y.2⟩
+  mul_assoc x y z:= by {intros; ext; apply mul_assoc}
+  one := ⟨1, by {
+  use 1
+  simp}⟩
+  one_mul x := by ext; apply one_mul
+  mul_one x := by ext; apply mul_one
+  inv x := ⟨unit_inverse x.1 x.2, unit_inverse_is_unit x.2 ⟩
+  mul_left_inv x:= by
+   ext
+   simp
+   sorry
 
 -- you have the correct group structure if this is true by `rfl`
-example (x y : {x : R // IsAUnit x}) : (↑(x * y) : R) = ↑x * ↑y := by sorry
+example (x y : {x : R // IsAUnit x}) : (↑(x * y) : R) = ↑x * ↑y := rfl
 
 end Ring
 
@@ -75,11 +124,18 @@ lemma exercise5_3 (x y : K) : (x + y) ^ p = x ^ p + y ^ p := by
   have h4 : range p = insert 0 (Ioo 0 p)
   · ext (_|_) <;> simp [h3]
   have h5 : ∀ i ∈ Ioo 0 p, p ∣ Nat.choose p i := by sorry
+
   have h6 : ∑ i in Ioo 0 p, x ^ i * y ^ (p - i) * Nat.choose p i = 0 :=
   calc
     _ =  ∑ i in Ioo 0 p, x ^ i * y ^ (p - i) * 0 := by sorry
-    _ = 0 := by sorry
-  sorry
+    _ = 0 := by {
+      simp
+    }
+  have h7 : ∑ m in range (p + 1), x ^ m * y ^ (p - m) * ↑(Nat.choose p m)= x^p+∑ m in Ioo 0 p, x ^ m * y ^ (p - m) * ↑(Nat.choose p m)+y^p := by sorry
+  /-from h7 we have  the middle term is zero hence we have the result.-/
+  rw[h7]
+  rw[h6]
+  simp
 
 
 /- Let's prove that if `M →ₗ[R] M` forms a module over `R`, then `R` must be a commutative ring.
@@ -90,5 +146,20 @@ lemma exercise5_3 (x y : K) : (x + y) ^ p = x ^ p + y ^ p := by
 lemma exercise5_4 {R M M' : Type*} [Ring R] [AddCommGroup M] [Module R M] [Nontrivial M]
     [NoZeroSMulDivisors R M] [Module R (M →ₗ[R] M)]
     (h : ∀ (r : R) (f : M →ₗ[R] M) (x : M), (r • f) x = r • f x)
-    (r s : R) : r * s = s * r := by
+    (r s : R) : r * s = s * r := by {
+  obtain ⟨m1, m2, h1⟩ : ∃ (m1 m2 : M), m1 ≠ m2 := exists_pair_ne M
+  let f := (LinearMap.id : M →ₗ[R] M)
+  have h1 : s • r • m1 = s• r• f m1 :=by exact rfl
+  have h2 : s• r• f m1 = s• f (r • m1) := by exact h1
+  have h2 :  s• f (r • m1) =  f (s• r • m1) := by exact h1
+  have h3 : f (s• r • m1) = s• f (r • m1) := by exact h1
+  have h4 : s• f (r • m1) =r• s• f m1 := by sorry
+  have h5 : (s• r - r • s)• m1 = 0 := by {
+    rw [@sub_smul]
+    sorry
+    }
+  have h6 : m1 ≠ 0 := by sorry
   sorry
+  /-i tried to make a proper proof but in some places i struggled to find appropriate function.-/
+
+}
