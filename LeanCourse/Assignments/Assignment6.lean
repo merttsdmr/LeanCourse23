@@ -69,12 +69,9 @@ If you want to prove this by using the intermediate value theorem only once,
 then use `intermediate_value_uIcc`.
 `uIcc a b` is the unordered interval `[min a b, max a b]`.
 Useful lemmas: `uIcc_of_le` and `mem_uIcc`. -/
-#check uIcc_of_le
-#check mem_uIcc
-#check intermediate_value_uIcc
 lemma exercise6_3 {f : α → α} (hf : Continuous f) (h2f : Injective f) {a b x : α}
-    (hab : a ≤ b) (h2ab : f a < f b) (hx : a ≤ x ) : f a ≤ f x := sorry
-  
+    (hab : a ≤ b) (h2ab : f a < f b) (hx : a ≤ x) : f a ≤ f x := by
+  sorry
 
 /- Now use this and the intermediate value theorem again
 to prove that `f` is at least monotone on `[a, ∞)`. -/
