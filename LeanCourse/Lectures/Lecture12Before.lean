@@ -246,8 +246,7 @@ end NormedSpace
 example (x : ℝ) :
     deriv (fun x ↦ Real.exp (x ^ 2)) x = 2 * x * Real.exp (x ^ 2) := by {
       apply HasDerivAt.deriv
-      apply hasDerivAt.exp
-
+      sorry
 
     }
 
