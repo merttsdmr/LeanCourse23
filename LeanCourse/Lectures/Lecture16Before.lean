@@ -29,10 +29,11 @@ theorem prod_equiv_prod {α₁ α₂ β₁ β₂ : Type*}
 
 /- Can I prove the sorry's in the script below? -/
 lemma my_equality (a b : ℕ) : (a + b) + a ≤ 2 * (a + b) := by
-  have c := a + b
-  have h : c = a + b := sorry
+  have c := a + b /-you need to use let-/
+  let c:=a+b
+  have h : c = a + b := rfl
   rw [← h]
-  sorry
+  linarith
 
 
 /- Will the following tactic work? -/
@@ -47,9 +48,9 @@ example {f : ℕ → ℕ} {p : ℕ → Prop}
     (h : ∀ x, p x → f x = x) :
     ∀ x, p x → f (f x) = x := by
   intros x hx
+  simp[*]
   -- simp_rw [h]
   -- simp [h]
-  sorry
 
 
 

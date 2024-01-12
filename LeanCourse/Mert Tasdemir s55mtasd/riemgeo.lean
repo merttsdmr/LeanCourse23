@@ -1,12 +1,13 @@
 -- First, we need to import the necessary libraries
 import LeanCourse.Common
--- We can start by defining a manifold
+import Mathlib.Geometry
+
 structure manifold :=
 (space : Type)
-(is_open : Set space → Prop)
-(open_univ : is_open Set.univ)
-(open_inter : ∀s t, is_open s → is_open t → is_open (s ∩ t))
-(open_union : ∀s t, is_open s → is_open t → is_open (s ∪ t))
+(topology : topological_space space)
+(smooth_atlas : set (local_homeomorph space ℝ)) -- smooth charts
+(smooth_atlas_cover : space = ⋃₀ {u | ∃ e : local_homeomorph space ℝ, u = e.source ∧ e ∈ smooth_atlas})
+(smooth_transition : ∀ e₁ e₂ : local_homeomorph space ℝ, e₁ ∈ smooth_atlas → e₂ ∈ smooth_atlas → e₁.source ∩ e₂.source ∈ e₁.to_fun ⁻¹' e₁.target ∩ e₂.to_fun ⁻¹' e₂.target)
 
 -- Next, we define a tangent space at a point of the manifold
 structure tangent_space (M : manifold) (p : M.space) :=
@@ -32,19 +33,6 @@ def riemannian_metric (M : manifold) :=
 noncomputable def angle (M : manifold) (g : riemannian_metric M) (p : M.space) (v w : (g p).1.vec_space) :=
 Real.arccos ((g p).2.ip v w / (Real.sqrt ((g p).2.ip v v) * Real.sqrt ((g p).2.ip w w)))
 
--- We first need to define a derivative on the tangent space
-structure derivative (M : manifold) (p : M.space) (T : tangent_space M p) :=
-(df : (ℝ → T.vec_space) → ℝ)
-(linearity : ∀ v w, df (T.add v w) = df v + df w)
-(leibniz : ∀ (f g : ℝ → T.vec_space), df (λ x↦ T.add (f x) (g x)) = λ x↦ T.add (df f) (df g))
-
--- The Levi-Civita connection is a derivative that satisfies the product rule
-structure levi_civita_connection (M : manifold) (g : riemannian_metric M) :=
-(conn : ∀ p : M.space, derivative M p (g p).1)
-(product_rule : ∀ p (f g : ℝ → (g p).1.vec_space), conn p (λ x↦ T.scalar_mul (f x) (g x)) =
-                 λ x↦ T.add (T.scalar_mul (f x) (conn p g)) (T.scalar_mul (g x) (conn p f)))
-
--- The Christoffel symbols are the coefficients of the Levi-Civita connection in a given coordinate system
-def christoffel_symbols (M : manifold) (g : riemannian_metric M) (nabla : levi_civita_connection M g) (coords : M.space → ℝ) :
-  M.space → (g p).1.vec_space → (g p).1.vec_space → ℝ :=
-λ p v w ↦ let e := coords p in nabla.conn p (λ x↦ T.scalar_mul (e x) v) w
+structure levi_civita_connection (M : manifold) :=
+  (connection : ∀ p : M.space, tangent_space M p → tangent_space M p → tangent_space M p)
+  -- Add properties of the connection if needed
