@@ -85,7 +85,8 @@ example (X : SmoothSection I E (TangentSpace I (M := M))) :
 variable (M I) in
 structure Connection where
   (conn : SmoothSection I E (TangentSpace I (M := M))→ SmoothSection I E (TangentSpace I (M := M)) → SmoothSection I E (TangentSpace I (M := M)))
-  (linear_first_arg : ∀ (X Y Z : SmoothSection I E (TangentSpace I (M := M)))(a : ℝ), conn (a • X+Z) Y= a • conn X Y+conn Z Y )
+  (linear_first_arg : ∀ (a : C^⊤⟮I, M; 𝓘(ℝ , ℝ ), ℝ⟯) (X Y : SmoothSection I E (TangentSpace I (M := M))), conn (a • X) Y= a • conn X Y )
+  (linear_first_arg2 : ∀ (X Y Z : SmoothSection I E (TangentSpace I (M := M))), conn (X+Y) Z= conn X Z + conn Y Z)
   (linear_second_arg : ∀ (X Y Z: SmoothSection I E (TangentSpace I (M := M)))(a : ℝ), conn X (a• Y+Z)=a • (conn X Y)+conn X Z)
   (leibniz_rule : ∀ (x: M)(X Y : SmoothSection I E (TangentSpace I (M := M)) )(f : C^⊤⟮I, M; 𝓘(ℝ , ℝ ), ℝ⟯), conn X (f • Y) = f • conn X Y + (mfderiv I 𝓘(ℝ, ℝ) f x (X x) • Y ) )
 
@@ -96,6 +97,9 @@ structure LieBracket where
   (bracket : SmoothSection I E (TangentSpace I (M := M))→ SmoothSection I E (TangentSpace I (M := M)) →  SmoothSection I E (TangentSpace I (M := M)))
   (antisymmetry : ∀ (X Y : SmoothSection I E (TangentSpace I (M := M))) , bracket X Y = -bracket Y X )
   (Jacobi_identity : ∀ (X Y Z : SmoothSection I E (TangentSpace I (M := M))) , bracket X (bracket Y Z) + bracket Y (bracket Z X) + bracket Z (bracket X Y) = 0)
+  (linearity : ∀ (a b : ℝ) (X Y Z : SmoothSection I E (TangentSpace I (M := M))), bracket (a•X+b•Y) Z =a • bracket X Z + b • bracket Y Z)
+  (product : ∀ (x : M) (X Y : SmoothSection I E (TangentSpace I (M := M))) (f : C^⊤⟮I, M; 𝓘(ℝ , ℝ ), ℝ⟯), bracket X (f • Y)= f • bracket X Y + (mfderiv I 𝓘(ℝ, ℝ) f x (X x) • Y ))
+
 
 
 #check Connection
@@ -110,33 +114,35 @@ def TorsionTensor (X Y : SmoothSection I E (TangentSpace I (M := M))) : SmoothSe
 variable (M I) in
 structure LeviCivitaConnection (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) where
   (connection : SmoothSection I E (TangentSpace I (M := M))→ SmoothSection I E (TangentSpace I (M := M)) → SmoothSection I E (TangentSpace I (M := M)))
-  (linear_first_arg : ∀ (a : ℝ) (X Y : SmoothSection I E (TangentSpace I (M := M))), connection (a • X) Y= a • connection X Y)
-  (linear_first_arg2 : ∀ (X Y Z : SmoothSection I E (TangentSpace I (M := M))), connection (X+Z) Y= (connection X Y)+connection Z Y)
+  (linear_first_arg : ∀ (a : C^⊤⟮I, M; 𝓘(ℝ , ℝ ), ℝ⟯) (X Y : SmoothSection I E (TangentSpace I (M := M))), connection (a • X) Y= a • connection X Y)
+  (linear_first_arg2 : ∀ (X Y Z : SmoothSection I E (TangentSpace I (M := M))), connection (X+Y) Z= (connection X Z)+connection Y Z)
   (linear_second_arg : ∀ (X Y Z: SmoothSection I E (TangentSpace I (M := M))) (a : ℝ), connection X (a• Y+Z)=a • (connection X Y)+connection X Z)
   (leibniz_rule : ∀ (x: M)(X Y : SmoothSection I E (TangentSpace I (M := M)) )(f : C^⊤⟮I, M; 𝓘(ℝ , ℝ ), ℝ⟯), connection X (f • Y) = f • connection X Y + (mfderiv I 𝓘(ℝ, ℝ) f x (X x) • Y ) )
   (metric_compatible : ∀ (x : M) (X Y Z : SmoothSection I E (TangentSpace I (M := M))),  (mfderiv I 𝓘(ℝ, ℝ) (PtWiseMetric g X Y) x (Z x))= g.metric x (conn.conn Z X) Y+ g.metric x X (conn.conn Z Y))
   (torsion_free : ∀ (X Y : SmoothSection I E (TangentSpace I (M := M))), TorsionTensor conn brack X Y = 0)
 
 
+variable (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M)
+instance (nabla : LeviCivitaConnection I M g conn brack) : Connection I M where
+conn := by exact nabla.connection
+linear_first_arg := by exact nabla.linear_first_arg
+linear_first_arg2 := by exact nabla.linear_first_arg2
+linear_second_arg := by exact nabla.linear_second_arg
+leibniz_rule := by exact nabla.leibniz_rule
+
+
+
+
+
 example (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (Y : SmoothSection I E (TangentSpace I (M := M))) :
- nabla.connection 0 Y = 0 := sorry
-
-
-
-
-
-
-variable (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) in
-def CurvatureTensor31 (X Y Z: SmoothSection I E (TangentSpace I (M := M))) : SmoothSection I E (TangentSpace I (M := M)) :=
-  nabla.connection X (nabla.connection Y Z) - nabla.connection Y (nabla.connection X Z) - nabla.connection (brack.bracket X Y) Z
-variable (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) in
-def CurvatureTensor40 (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) : ℝ :=
-  g.metric x (CurvatureTensor31 g conn brack nabla X Y Z) W
-
-
-
-
-
+ nabla.connection 0 Y = 0 := by {
+  have : nabla.connection 0 Y = nabla.connection (0 • Y) Y := by simp
+  calc nabla.connection (0 • Y) Y = 0 • nabla.connection Y Y := by{
+    rw [← @ofNat_zsmul]
+    sorry
+  }
+                                _= 0 := rfl
+ }
 lemma ex1 (brack: LieBracket I M) (X Y : SmoothSection I E (TangentSpace I (M := M))) : brack.bracket X Y= -1 • brack.bracket Y X := by{
   rw[LieBracket.antisymmetry]
   simp
@@ -159,8 +165,6 @@ nabla.connection (-X) Y = - nabla.connection X Y := by{
 
 
 
-
-
   calc nabla.connection (-X) Y = nabla.connection (-1 • X) Y := by simp
                               _ = -1 • nabla.connection X Y := by{
                               rw [@neg_one_zsmul]
@@ -177,10 +181,61 @@ nabla.connection (-X) Y = - nabla.connection X Y := by{
                               _ = - nabla.connection X Y := by simp
 }
 
+lemma ex4 (g : RiemannianMetric I M) (X : SmoothSection I E (TangentSpace I (M := M)) ) : g.metric x 0 X=0 := by{
+  calc g.metric x 0 X = g.metric x (0 • X) X := by exact rfl
+                      _= 0* g.metric x X X := by {
+                        rw[←g.linearity]
+                        simp
+                      }
+                      _=0 := by simp
+}
+
+
+
+
+
+
+
+
+
+
+
+variable (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) in
+def CurvatureTensor31 (X Y Z: SmoothSection I E (TangentSpace I (M := M))) : SmoothSection I E (TangentSpace I (M := M)) :=
+  nabla.connection X (nabla.connection Y Z) - nabla.connection Y (nabla.connection X Z) - nabla.connection (brack.bracket X Y) Z
+
+
+variable (x : M) (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) in
+lemma prop1_R31 (X Y Z : SmoothSection I E (TangentSpace I (M := M))) (f : C^⊤⟮I, M; 𝓘(ℝ , ℝ ), ℝ⟯) : CurvatureTensor31 g conn brack nabla X (f • Y) Z=f • CurvatureTensor31 g conn brack nabla X Y Z := by{
+  rw[CurvatureTensor31]
+  sorry
+
+}
+
+
+
+
+
+
+
+
+variable (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) in
+def CurvatureTensor40 (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) : ℝ :=
+  g.metric x (CurvatureTensor31 g conn brack nabla X Y Z) W
+
+
+
+
+
+
+
+
+
 
 
 /- R(X,Y,Z,W)=-R(Y,X,Z,W)    -/
-example (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) : CurvatureTensor40 g conn brack nabla x X Y Z W = - CurvatureTensor40 g conn brack nabla x Y X Z W := by
+lemma SkewSymR401 (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M)))
+: CurvatureTensor40 x g conn brack nabla X Y Z W = - CurvatureTensor40 x g conn brack nabla Y X Z W := by
 {
   rw[CurvatureTensor40]
   rw[CurvatureTensor40]
@@ -207,13 +262,83 @@ example (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I 
   rw [this]
 }
 
+lemma SkewSymR402 (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) : CurvatureTensor40 x g conn brack nabla X Y Z W = - CurvatureTensor40 x g conn brack nabla X Y W Z := by sorry
+
+lemma SymInR40 (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) :
+ CurvatureTensor40 x g conn brack nabla X Y Z W = CurvatureTensor40 x g conn brack nabla Y X W Z  := by {
+  rw[SkewSymR401]
+  rw[SkewSymR402]
+  simp
+ }
 
 
-#check OrthonormalBasis
+lemma BianchiR31 (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (x : M) (X Y Z : SmoothSection I E (TangentSpace I (M := M))) : CurvatureTensor31 g conn brack nabla X Y Z + CurvatureTensor31 g conn brack nabla Y Z X + CurvatureTensor31 g conn brack nabla Z X Y = 0 := by{
+  rw[CurvatureTensor31]
+  rw[CurvatureTensor31]
+  rw[CurvatureTensor31]
+  have : TorsionTensor conn brack X Y = 0 := by {
+      rw[nabla.torsion_free]
+  }
+  calc LeviCivitaConnection.connection nabla X (LeviCivitaConnection.connection nabla Y Z) -
+          LeviCivitaConnection.connection nabla Y (LeviCivitaConnection.connection nabla X Z) -
+        LeviCivitaConnection.connection nabla (LieBracket.bracket brack X Y) Z +
+      (LeviCivitaConnection.connection nabla Y (LeviCivitaConnection.connection nabla Z X) -
+          LeviCivitaConnection.connection nabla Z (LeviCivitaConnection.connection nabla Y X) -
+        LeviCivitaConnection.connection nabla (LieBracket.bracket brack Y Z) X) +
+    (LeviCivitaConnection.connection nabla Z (LeviCivitaConnection.connection nabla X Y) -
+        LeviCivitaConnection.connection nabla X (LeviCivitaConnection.connection nabla Z Y) -
+      LeviCivitaConnection.connection nabla (LieBracket.bracket brack Z X) Y) = nabla.connection X (nabla.connection Y Z-nabla.connection Z Y)+ nabla.connection Y (nabla.connection X Z-nabla.connection Z X)+ nabla.connection Z (nabla.connection Y X-nabla.connection X Y)-nabla.connection (brack.bracket X Y) Z-nabla.connection (brack.bracket Y Z) X-nabla.connection (brack.bracket Z X) Y := sorry
+      _=nabla.connection X (brack.bracket Y Z)+ nabla.connection Y (brack.bracket X Z)+nabla.connection Z (brack.bracket Y X)-nabla.connection (brack.bracket X Y) Z-nabla.connection (brack.bracket Y Z) X-nabla.connection (brack.bracket Z X) Y := sorry
+      _=0 := sorry
+}
+
+lemma BianchiR40 (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) :
+ CurvatureTensor40 x g conn brack nabla X Y Z W + CurvatureTensor40 x g conn brack nabla  Y Z X W + CurvatureTensor40 x g conn brack nabla Z X Y W = 0 := by{
+  rw[CurvatureTensor40]
+  rw[CurvatureTensor40]
+  rw[CurvatureTensor40]
+  calc RiemannianMetric.metric g x (CurvatureTensor31 g conn brack nabla X Y Z) W +
+      RiemannianMetric.metric g x (CurvatureTensor31 g conn brack nabla Y Z X) W +
+    RiemannianMetric.metric g x (CurvatureTensor31 g conn brack nabla Z X Y) W = g.metric x ((CurvatureTensor31 g conn brack nabla X Y Z)+(CurvatureTensor31 g conn brack nabla Y Z X)+(CurvatureTensor31 g conn brack nabla Z X Y)) W := by {
+      rw[←g.linearity2]
+      rw[←g.linearity2]
+    }
+                                                                              _=g.metric x 0 W := by rw [BianchiR31
+                                                                                  g conn brack nabla
+                                                                                  x X Y Z]
+                                                                              _= 0 := by exact ex4 x g W
+}
 
 
-open BigOperators Finset
+lemma MainSymR40 (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) :
+ CurvatureTensor40 x g conn brack nabla X Y Z W =CurvatureTensor40 x g conn brack nabla Z W X Y := by{
+  have Bianchi1 :  CurvatureTensor40 x g conn brack nabla X Y Z W + CurvatureTensor40 x g conn brack nabla  Y Z X W + CurvatureTensor40 x g conn brack nabla Z X Y W = 0 := by exact BianchiR40 g conn brack nabla x X Y Z W
+  have Bianchi2 :  CurvatureTensor40 x g conn brack nabla Y Z W X+ CurvatureTensor40 x g conn brack nabla  Z W Y X + CurvatureTensor40 x g conn brack nabla W Y Z X = 0 := by exact  BianchiR40 g conn brack nabla x Y Z W X
+  have Bianchi3 :  CurvatureTensor40 x g conn brack nabla Z W X Y + CurvatureTensor40 x g conn brack nabla W X Z Y + CurvatureTensor40 x g conn brack nabla X Z W Y = 0 := by exact  BianchiR40 g conn brack nabla x Z W X Y
+  have Bianchi4 :  CurvatureTensor40 x g conn brack nabla W X Y Z + CurvatureTensor40 x g conn brack nabla  X Y W Z + CurvatureTensor40 x g conn brack nabla Y W X Z = 0 := by exact  BianchiR40 g conn brack nabla x W X Y Z
+  have SummAllBianchi : CurvatureTensor40 x g conn brack nabla X Y Z W + CurvatureTensor40 x g conn brack nabla  Y Z X W + CurvatureTensor40 x g conn brack nabla Z X Y W + CurvatureTensor40 x g conn brack nabla Y Z W X+ CurvatureTensor40 x g conn brack nabla  Z W Y X + CurvatureTensor40 x g conn brack nabla W Y Z X+CurvatureTensor40 x g conn brack nabla Z W X Y + CurvatureTensor40 x g conn brack nabla W X Z Y + CurvatureTensor40 x g conn brack nabla X Z W Y+CurvatureTensor40 x g conn brack nabla W X Y Z + CurvatureTensor40 x g conn brack nabla  X Y W Z + CurvatureTensor40 x g conn brack nabla Y W X Z=0 := by {
+    rw[Bianchi1]
+    simp
+    rw[Bianchi2]
+    simp
+    rw[Bianchi3]
+    simp
+    rw[Bianchi4]
+  }
+  have OtherPerspectiveBianchi : CurvatureTensor40 x g conn brack nabla X Y Z W + CurvatureTensor40 x g conn brack nabla  Y Z X W + CurvatureTensor40 x g conn brack nabla Z X Y W + CurvatureTensor40 x g conn brack nabla Y Z W X+ CurvatureTensor40 x g conn brack nabla  Z W Y X + CurvatureTensor40 x g conn brack nabla W Y Z X+CurvatureTensor40 x g conn brack nabla Z W X Y + CurvatureTensor40 x g conn brack nabla W X Z Y + CurvatureTensor40 x g conn brack nabla X Z W Y+CurvatureTensor40 x g conn brack nabla W X Y Z + CurvatureTensor40 x g conn brack nabla  X Y W Z + CurvatureTensor40 x g conn brack nabla Y W X Z= 2* CurvatureTensor40 x g conn brack nabla X Y Z W- 2* CurvatureTensor40 x g conn brack nabla Z W X Y := by{
+   sorry
+  }
+  have MergeTogether : 2* CurvatureTensor40 x g conn brack nabla X Y Z W- 2* CurvatureTensor40 x g conn brack nabla Z W X Y =0 := by{
+    rw[←OtherPerspectiveBianchi]
+    rw[SummAllBianchi]
+  }
+  have : CurvatureTensor40 x g conn brack nabla X Y Z W= CurvatureTensor40 x g conn brack nabla Z W X Y  := sorry
+  exact this
+}
 
-def myBasis := Basis.ofVectorSpace (SmoothSection I E (TangentSpace I (M := M)))
 
-#check myBasis
+
+
+variable (g : RiemannianMetric I M) (conn : Connection I M) (brack: LieBracket I M) (nabla : LeviCivitaConnection I M g conn brack) in
+structure FlatManifold where
+(condition : ∀ (x : M) (X Y Z W : SmoothSection I E (TangentSpace I (M := M))) , CurvatureTensor40 x g conn brack nabla X Y Z W=0)
