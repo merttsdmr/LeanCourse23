@@ -12,6 +12,34 @@ import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 import Mathlib.Geometry.Manifold.ContMDiff
 import Mathlib.LinearAlgebra.TensorProduct
 
+/-
+In this project I aimed to formalize basics of Riemannian Geometry and prove some identities using Lean.
+Even though I successfully done what I have in my mind, I could not managed to prove some parts in the theorems,
+those parts are:
+1) the theorem with ∇_LC 0 Y = 0
+2) ex3
+3) prop1_R31
+4)skewsymr402
+5)bianchir31
+6)mainsym40
+
+But the main ideas in the proofs are clearly indicated and just small parts of them are missing. Unfortunately,
+it does not seem that I will have time to fix them because of the workload of my thesis and exams. The Lean program
+has taken my interest but I believe I could not give my full potential interest to this course...
+-/
+
+
+
+
+
+
+
+
+
+
+
+
+
 /-First of all let us give the notions for manifolds in library.-/
 
 #check LocalEquiv
